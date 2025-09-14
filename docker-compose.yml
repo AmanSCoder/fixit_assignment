@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8053 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8053:8053"
+    environment:
+      - REDIS_HOST=redis
+      - MINIO_ENDPOINT=minio:9000
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VECTOR_DB_HOST=qdrant
+      - AI_API_KEY=${AI_API_KEY}
+      - LOG_LEVEL=debug
+    depends_on:
+      - redis
+      - minio
+      - qdrant
+  
+  worker:
+    build: .
+    command: celery -A celery_worker.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - MINIO_ENDPOINT=minio:9000
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VECTOR_DB_HOST=qdrant
+      - AI_API_KEY=${AI_API_KEY}
+    depends_on:
+      - redis
+      - minio
+      - qdrant
+  
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+  
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+  
+volumes:
+  minio_data:
+  qdrant_data:
