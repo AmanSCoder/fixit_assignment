@@ -8,7 +8,6 @@ load_dotenv()
 class Settings(BaseSettings):
     # App settings
     APP_NAME: str = "DocuQuery"
-    API_V1_STR: str = "/api/v1"
 
     # MinIO settings
     MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "minio:9001")

@@ -10,7 +10,6 @@ from app.db.crud_documents import (
     create_document,
     get_document,
     list_documents,
-    update_document_status,
     delete_document,
 )
 from app.models.document_db import DocumentStatusEnum

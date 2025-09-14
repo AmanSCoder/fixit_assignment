@@ -76,8 +76,6 @@ def process_document_task(self, document_id: str, object_name: str):
         else:
             update_document_status(db, document_id, DocumentStatusEnum.failed)
 
-        # Cache document chunks for faster retrieval
-        # logger.debug(f"Caching document chunks for document_id={document_id}", exc_info=True)
         # Convert numpy arrays to lists if needed
         serializable_chunks = []
         for chunk in chunks:
@@ -85,6 +83,9 @@ def process_document_task(self, document_id: str, object_name: str):
                 serializable_chunks.append(chunk.tolist())
             else:
                 serializable_chunks.append(chunk)
+        
+        # Cache document chunks for faster retrieval
+        logger.debug(f"Caching document chunks for document_id={document_id}", exc_info=True)
         cache.cache_document_chunks(document_id, serializable_chunks)
 
         logger.info(f"Document {document_id} processed successfully")

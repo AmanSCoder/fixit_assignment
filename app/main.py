@@ -25,8 +25,8 @@ app.add_middleware(
 )
 
 # Include API routers
-app.include_router(documents.router, prefix=settings.API_V1_STR)
-app.include_router(query.router, prefix=settings.API_V1_STR)
+app.include_router(documents.router) 
+app.include_router(query.router)
 app.include_router(websocket.router)
 
 # Create the database tables
