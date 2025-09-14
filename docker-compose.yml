@@ -16,10 +16,12 @@ services:
       - VECTOR_DB_HOST=qdrant
       - AI_API_KEY=${AI_API_KEY}
       - LOG_LEVEL=debug
+      - DATABASE_URL=postgresql+psycopg2://user:password@db:5432/documents
     depends_on:
       - redis
       - minio
       - qdrant
+      - db
   
   worker:
     build: .
@@ -33,10 +35,12 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - VECTOR_DB_HOST=qdrant
       - AI_API_KEY=${AI_API_KEY}
+      - DATABASE_URL=postgresql+psycopg2://user:password@db:5432/documents
     depends_on:
       - redis
       - minio
       - qdrant
+      - db
   
   redis:
     image: redis:alpine
@@ -61,7 +65,20 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
-  
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: documents
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 volumes:
   minio_data:
   qdrant_data:
+  postgres_data:

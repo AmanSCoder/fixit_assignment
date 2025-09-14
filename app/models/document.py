@@ -2,11 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
-
-class DocumentStatus(str, Enum):
-    processing = "processing"
-    ready = "ready"
-    failed = "failed"
+from app.models.document_db import DocumentStatusEnum
 
 class DocumentBase(BaseModel):
     title: str
@@ -15,17 +11,19 @@ class DocumentBase(BaseModel):
 class DocumentCreate(DocumentBase):
     pass
 
-class DocumentResponse(DocumentBase):
+class DocumentResponse(BaseModel):
     id: str
+    title: str
+    description: Optional[str] = ""
     file_name: str
-    file_size: int
-    file_type: str
-    created_at: datetime
-    status: DocumentStatus  # <-- use Enum here
+    file_size: Optional[int]
+    file_type: Optional[str]
+    created_at: Optional[datetime] = None  # <-- Make this optional
+    status: DocumentStatusEnum
 
     class Config:
         orm_mode = True
 
-class DocumentList(BaseModel):
+class  DocumentList(BaseModel):
     documents: List[DocumentResponse]
     total: int

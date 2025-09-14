@@ -4,8 +4,12 @@ from app.core.document_processor import document_processor
 from app.services.ai_service import ai_service
 from app.core.vector_store import vector_store
 from app.core.cache import cache
+from app.db.session import SessionLocal
+from app.db.crud_documents import update_document_status
+from app.models.document_db import DocumentStatusEnum
 import asyncio
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +28,9 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-# TODO replace with proper database
-from app.db.memory import documents
-
 @celery_app.task(bind=True, name="process_document")
 def process_document_task(self, document_id: str, object_name: str):
-    """Process document, extract text, generate embeddings, and store in vector DB"""
+    db = SessionLocal()
     try:
         logger.info(f"Processing document {document_id} with object_name: {object_name}")
 
@@ -40,8 +41,7 @@ def process_document_task(self, document_id: str, object_name: str):
 
         if not chunks:
             logger.warning(f"No text extracted from document {document_id}")
-            if document_id in documents:
-                documents[document_id]["status"] = "failed"
+            update_document_status(db, document_id, DocumentStatusEnum.failed)
             return False
 
         # Generate embeddings for chunks using the AI service
@@ -50,26 +50,35 @@ def process_document_task(self, document_id: str, object_name: str):
         embeddings = loop.run_until_complete(ai_service.generate_embeddings(chunks))
         logger.debug(f"Generated embeddings for document {document_id}")
 
-        # Store chunks and embeddings in vector store
+        # Store chunks and embeddings in vector store 
         logger.debug(f"Adding document chunks to vector store for document_id={document_id}")
         result = vector_store.add_document_chunks(document_id, chunks, embeddings, metadatas)
         logger.debug(f"Vector store add_document_chunks result for document_id={document_id}: {result}")
 
         # Update document status
-        if document_id in documents:
-            documents[document_id]["status"] = "ready" if result else "failed"
-            logger.debug(f"Updated document status for {document_id} to {documents[document_id]['status']}")
+        if result:
+            update_document_status(db, document_id, DocumentStatusEnum.ready)
+        else:
+            update_document_status(db, document_id, DocumentStatusEnum.failed)
 
         # Cache document chunks for faster retrieval
-        logger.debug(f"Caching document chunks for document_id={document_id}")
-        cache.cache_document_chunks(document_id, chunks)
+        # logger.debug(f"Caching document chunks for document_id={document_id}", exc_info=True)
+        # Convert numpy arrays to lists if needed
+        serializable_chunks = []
+        for chunk in chunks:
+            if isinstance(chunk, np.ndarray):
+                serializable_chunks.append(chunk.tolist())
+            else:
+                serializable_chunks.append(chunk)
+        cache.cache_document_chunks(document_id, serializable_chunks)
 
         logger.info(f"Document {document_id} processed successfully")
         return result
     except Exception as e:
         logger.error(f"Error processing document {document_id}: {e}", exc_info=True)
-        if document_id in documents:
-            documents[document_id]["status"] = "failed"
+        update_document_status(db, document_id, DocumentStatusEnum.failed)
         return False
+    finally:
+        db.close()
 
 # Create a separate Celery worker file that imports these tasks

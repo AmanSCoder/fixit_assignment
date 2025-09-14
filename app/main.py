@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import documents, query, websocket
 from app.config import settings
+from app.models.document_db import Base
+from app.db.session import engine
 import os
 import logging
 
@@ -26,6 +28,9 @@ app.add_middleware(
 app.include_router(documents.router, prefix=settings.API_V1_STR)
 app.include_router(query.router, prefix=settings.API_V1_STR)
 app.include_router(websocket.router)
+
+# Create the database tables
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 async def root():

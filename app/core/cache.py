@@ -31,7 +31,11 @@ class RedisCache:
         """Set data in cache with TTL"""
         try:
             key = self._generate_key(key_type, identifier)
-            serialized_data = json.dumps(data)
+            try:
+                serialized_data = json.dumps(data)
+            except Exception as ser_e:
+                logger.error(f"Error serializing data for key {key}: {ser_e} | Data: {repr(data)}")
+                return False
             ttl = ttl or self.default_ttl
             self.redis.set(key, serialized_data, ex=ttl)
             return True
