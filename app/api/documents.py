@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query
 from typing import List
 from datetime import datetime
-from app.models.document import DocumentResponse, DocumentList
+from app.models.document import DocumentResponse, DocumentList, DocumentStatus
 from app.services.minio_service import minio_service
 from app.services.celery_tasks import process_document_task
 import uuid
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 from app.db.memory import documents
 
 @router.post("/", response_model=DocumentResponse)
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(file: UploadFile = File(...)): # TODO verify this line
     """Upload a new document"""
     # Check file extension
     allowed_extensions = [".pdf", ".txt", ".docx", ".doc"]
@@ -27,17 +27,16 @@ async def upload_document(file: UploadFile = File(...)):
     # Upload file to MinIO
     doc_info = await minio_service.upload_document(file)
     
-    # Create document record
     doc_id = doc_info["id"]
     document = {
         "id": doc_id,
-        "title": file.filename,  # Use filename as default title
+        "title": file.filename,  
         "description": "",
         "file_name": file.filename,
         "file_size": doc_info["file_size"],
         "file_type": file.content_type,
         "created_at": datetime.now(),
-        "status": "processing"
+        "status": DocumentStatus.processing
     }
     
     # Store document info

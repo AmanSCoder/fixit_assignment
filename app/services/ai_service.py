@@ -32,7 +32,6 @@ class AIService:
                     model=self.embedding_deployment
                 )
             )
-            logger.debug(f"Embedding response: {response}")
             embeddings = [item.embedding for item in response.data]
             logger.info("Successfully generated embeddings.")
             return embeddings

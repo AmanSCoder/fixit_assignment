@@ -98,7 +98,7 @@ async def websocket_query(websocket: WebSocket):
                     })
                 )
             except Exception as e:
-                logger.error(f"Error processing WebSocket query: {e}")
+                logger.error(f"Error processing WebSocket query: {e}", exc_info=True)
                 await manager.send_message(
                     connection_id,
                     json.dumps({
