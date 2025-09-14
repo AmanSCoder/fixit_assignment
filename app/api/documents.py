@@ -10,7 +10,12 @@ from app.db.crud_documents import (
     create_document, get_document, list_documents, update_document_status, delete_document
 )
 from app.models.document_db import DocumentStatusEnum
+from app.core.vector_store import vector_store
+from app.core.cache import cache
 import uuid
+import logging
+
+logger= logging.getLogger(__name__)
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -74,21 +79,32 @@ async def get_document_endpoint(document_id: str, db: Session = Depends(get_db))
 @router.delete("/{document_id}")
 async def delete_document_endpoint(document_id: str, db: Session = Depends(get_db)):
     """Delete a document"""
-    doc = delete_document(db, document_id)
+    doc = get_document(db, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Get the document info
-    # doc = documents[document_id]
-    
     # Delete from MinIO
-    # minio_service.delete_document(document_id, doc["file_name"])
-    
-    # Remove from document store
-    # del documents[document_id]
-    
-    # In a real implementation, you would also:
-    # 1. Delete embeddings from vector store
-    # 2. Delete cached data from Redis
-    
+    try:
+        minio_service.delete_document(document_id, doc.file_name)
+    except Exception as e:
+        # Log but don't fail deletion if file is already gone
+        logger.warning(f"Failed to delete file from MinIO: {e}")
+
+    # Delete embeddings from vector store
+    try:
+        vector_store.delete_document_chunks(document_id)
+    except Exception as e:
+        logger.warning(f"Failed to delete from vector store: {e}")
+
+    # Delete cached data from Redis
+    try:
+        cache.delete_document_cache(document_id)
+    except Exception as e:
+        logger.warning(f"Failed to delete cache: {e}")
+
+    # Remove from document store (database)
+    deleted_doc = delete_document(db, document_id)
+    if not deleted_doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
     return {"message": "Document deleted successfully"}
