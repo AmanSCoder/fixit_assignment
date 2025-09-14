@@ -32,6 +32,7 @@ app.include_router(websocket.router)
 # Create the database tables
 Base.metadata.create_all(bind=engine)
 
+
 @app.get("/")
 async def root():
     return {
@@ -39,6 +40,8 @@ async def root():
         "docs": "/docs",
     }
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

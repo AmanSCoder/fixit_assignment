@@ -5,10 +5,12 @@ from datetime import datetime
 
 Base = declarative_base()
 
+
 class DocumentStatusEnum(str, enum.Enum):
     processing = "processing"
     ready = "ready"
     failed = "failed"
+
 
 class Document(Base):
     __tablename__ = "documents"

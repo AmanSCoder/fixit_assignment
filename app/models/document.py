@@ -4,12 +4,15 @@ from datetime import datetime
 from enum import Enum
 from app.models.document_db import DocumentStatusEnum
 
+
 class DocumentBase(BaseModel):
     title: str
     description: Optional[str] = None
 
+
 class DocumentCreate(DocumentBase):
     pass
+
 
 class DocumentResponse(BaseModel):
     id: str
@@ -24,6 +27,7 @@ class DocumentResponse(BaseModel):
     class Config:
         orm_mode = True
 
-class  DocumentList(BaseModel):
+
+class DocumentList(BaseModel):
     documents: List[DocumentResponse]
     total: int

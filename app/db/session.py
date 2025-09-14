@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+psycopg2://user:password@db:5432/documents"  # Use 'db' as host for Docker Compose
+    "postgresql+psycopg2://user:password@db:5432/documents",  # Use 'db' as host for Docker Compose
 )
 
 engine = create_engine(DATABASE_URL)

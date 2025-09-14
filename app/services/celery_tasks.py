@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 celery_app = Celery(
     "docuquery",
     broker=settings.CELERY_BROKER_URL,
-    backend=settings.CELERY_RESULT_BACKEND
+    backend=settings.CELERY_RESULT_BACKEND,
 )
 
 celery_app.conf.update(
@@ -28,15 +28,22 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+
 @celery_app.task(bind=True, name="process_document")
 def process_document_task(self, document_id: str, object_name: str):
     db = SessionLocal()
     try:
-        logger.info(f"Processing document {document_id} with object_name: {object_name}")
+        logger.info(
+            f"Processing document {document_id} with object_name: {object_name}"
+        )
 
         # Process document to extract text and split into chunks
-        logger.debug(f"Calling document_processor.process_document with document_id={document_id}, object_name={object_name}")
-        chunks, metadatas = document_processor.process_document(document_id, object_name)
+        logger.debug(
+            f"Calling document_processor.process_document with document_id={document_id}, object_name={object_name}"
+        )
+        chunks, metadatas = document_processor.process_document(
+            document_id, object_name
+        )
         logger.debug(f"Extracted {len(chunks)} chunks and metadatas: {metadatas}")
 
         if not chunks:
@@ -45,15 +52,23 @@ def process_document_task(self, document_id: str, object_name: str):
             return False
 
         # Generate embeddings for chunks using the AI service
-        logger.debug(f"Generating embeddings for document {document_id} chunks: {chunks}")
+        logger.debug(
+            f"Generating embeddings for document {document_id} chunks: {chunks}"
+        )
         loop = asyncio.get_event_loop()
         embeddings = loop.run_until_complete(ai_service.generate_embeddings(chunks))
         logger.debug(f"Generated embeddings for document {document_id}")
 
-        # Store chunks and embeddings in vector store 
-        logger.debug(f"Adding document chunks to vector store for document_id={document_id}")
-        result = vector_store.add_document_chunks(document_id, chunks, embeddings, metadatas)
-        logger.debug(f"Vector store add_document_chunks result for document_id={document_id}: {result}")
+        # Store chunks and embeddings in vector store
+        logger.debug(
+            f"Adding document chunks to vector store for document_id={document_id}"
+        )
+        result = vector_store.add_document_chunks(
+            document_id, chunks, embeddings, metadatas
+        )
+        logger.debug(
+            f"Vector store add_document_chunks result for document_id={document_id}: {result}"
+        )
 
         # Update document status
         if result:
@@ -80,5 +95,6 @@ def process_document_task(self, document_id: str, object_name: str):
         return False
     finally:
         db.close()
+
 
 # Create a separate Celery worker file that imports these tasks
