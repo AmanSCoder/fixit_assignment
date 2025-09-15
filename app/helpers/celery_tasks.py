@@ -6,7 +6,7 @@ from app.utils.vector_store import vector_store
 from app.utils.cache import cache
 from app.db.session import SessionLocal
 from app.db.crud_documents import update_document_status
-from app.models.document_db import DocumentStatusEnum
+from app.models.document_table import DocumentStatusEnum
 import asyncio
 import logging
 import numpy as np

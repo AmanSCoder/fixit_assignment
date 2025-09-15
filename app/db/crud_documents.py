@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.document_db import Document, DocumentStatusEnum
+from app.models.document_table import Document, DocumentStatusEnum
 
 
 def create_document(db: Session, doc_data: dict):

@@ -12,7 +12,7 @@ from app.db.crud_documents import (
     list_documents,
     delete_document,
 )
-from app.models.document_db import DocumentStatusEnum
+from app.models.document_table import DocumentStatusEnum
 from app.utils.vector_store import vector_store
 from app.utils.cache import cache
 import uuid
@@ -34,35 +34,39 @@ def get_db():
 @router.post("/", response_model=DocumentResponse)
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Upload a new document"""
-    # Check file extension
-    allowed_extensions = [".pdf", ".txt", ".docx", ".doc"]
-    file_ext = "." + file.filename.split(".")[-1].lower()
+    try:
+        # Check file extension
+        allowed_extensions = [".pdf", ".txt", ".docx", ".doc"]
+        file_ext = "." + file.filename.split(".")[-1].lower()
 
-    if file_ext not in allowed_extensions:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File type not supported. Allowed types: {', '.join(allowed_extensions)}",
-        )
+        if file_ext not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type not supported. Allowed types: {', '.join(allowed_extensions)}",
+            )
 
-    # Upload file to MinIO
-    doc_info = await minio_helper.upload_document(file)
+        # Upload file to MinIO
+        doc_info = await minio_helper.upload_document(file)
 
-    doc_id = doc_info["id"]
-    document_data = {
-        "id": doc_id,
-        "title": file.filename,
-        "description": "",
-        "file_name": file.filename,
-        "file_size": doc_info["file_size"],
-        "file_type": file.content_type,
-        "status": DocumentStatusEnum.processing,
-    }
-    db_doc = create_document(db, document_data)
+        doc_id = doc_info["id"]
+        document_data = {
+            "id": doc_id,
+            "title": file.filename,
+            "description": "",
+            "file_name": file.filename,
+            "file_size": doc_info["file_size"],
+            "file_type": file.content_type,
+            "status": DocumentStatusEnum.processing,
+        }
+        db_doc = create_document(db, document_data)
 
-    # Process document in background
-    process_document_task.delay(doc_id, doc_info["object_name"])
+        # Process document in background
+        process_document_task.delay(doc_id, doc_info["object_name"])
 
-    return db_doc
+        return db_doc
+    except Exception as e:
+        logger.exception(f"Error uploading document: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to upload document: {str(e)}")
 
 
 @router.get("/", response_model=DocumentList)

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
-from app.models.document_db import DocumentStatusEnum
+from app.models.document_table import DocumentStatusEnum
 
 
 class DocumentBase(BaseModel):

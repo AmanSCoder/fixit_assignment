@@ -11,14 +11,18 @@ logger = logging.getLogger(__name__)
 
 class MinioHelper:
     def __init__(self):
-        endpoint, secure = self.get_endpoint()
-        self.client = Minio(
-            endpoint,
-            access_key=settings.MINIO_ACCESS_KEY,
-            secret_key=settings.MINIO_SECRET_KEY,
-            secure=secure,  
-        )
-        self._ensure_bucket_exists()
+        self.client = None
+        
+    def _init_client(self):
+        if self.client is None:
+            endpoint, secure = self.get_endpoint()
+            self.client = Minio(
+                endpoint,
+                access_key=settings.MINIO_ACCESS_KEY,
+                secret_key=settings.MINIO_SECRET_KEY,
+                secure=secure,  
+            )
+            self._ensure_bucket_exists()
 
     def get_endpoint(self):
         endpoint =settings.MINIO_ENDPOINT
@@ -35,6 +39,7 @@ class MinioHelper:
     def _ensure_bucket_exists(self):
         """Ensure the documents bucket exists"""
         try:
+            self._init_client()
             if not self.client.bucket_exists(settings.MINIO_BUCKET_NAME):
                 self.client.make_bucket(settings.MINIO_BUCKET_NAME)
                 logger.info(f"Created bucket {settings.MINIO_BUCKET_NAME}")
@@ -45,6 +50,7 @@ class MinioHelper:
     async def upload_document(self, file: UploadFile) -> dict:
         """Upload a document to MinIO storage"""
         try:
+            self._init_client()
             # Generate a unique file ID and construct the object name
             file_id = str(uuid.uuid4())
             object_name = f"{file_id}/{file.filename}"
@@ -83,6 +89,7 @@ class MinioHelper:
     def get_document(self, document_id: str, file_name: str) -> io.BytesIO:
         """Get a document from MinIO storage"""
         try:
+            self._init_client()
             object_name = f"{document_id}/{file_name}"
             response = self.client.get_object(settings.MINIO_BUCKET_NAME, object_name)
             return io.BytesIO(response.read())
@@ -93,6 +100,7 @@ class MinioHelper:
     def delete_document(self, document_id: str, file_name: str) -> bool:
         """Delete a document from MinIO storage"""
         try:
+            self._init_client()
             object_name = f"{document_id}/{file_name}"
             self.client.remove_object(settings.MINIO_BUCKET_NAME, object_name)
             return True
