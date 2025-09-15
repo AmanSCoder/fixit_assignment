@@ -1,0 +1,37 @@
+# fly.toml
+app = "worker-fixit"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[processes]
+  worker = "celery -A celery_worker.celery_app worker --concurrency=1 --loglevel=info"
+
+
+[env]
+  APP_NAME = "DocuQuery"
+  DATABASE_URL = "postgresql+psycopg2://postgres:postgres_password@postgres-fixit-app.flycast:5432/postgres?sslmode=disable"
+  MINIO_ENDPOINT = "http://minio-app-name.fly.dev:9000"
+  MINIO_ACCESS_KEY = "minioadmin"
+  MINIO_SECRET_KEY = "minioadmin"
+  MINIO_BUCKET_NAME = "documents"
+  REDIS_HOST = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io"
+  REDIS_PORT = "6379"
+  REDIS_DB = "0"
+  CELERY_BROKER_URL = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io:6379/0"
+  CELERY_RESULT_BACKEND = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io:6379/0"
+  VECTOR_DB_TYPE = "qdrant"
+  VECTOR_DB_HOST = "qdrant-fixit.fly.dev"
+  VECTOR_DB_PORT = "6333"
+  AI_MODEL_PROVIDER = "azure"
+  AZURE_OPENAI_ENDPOINT = "https://amans-mfjlnzg6-eastus2.cognitiveservices.azure.com"
+  AZURE_EMBEDDING_DEPLOYMENT_NAME = "text-embedding-ada-002"
+  AZURE_CHAT_MODEL_DEPLOYMENT_NAME = "gpt-4o"
+  AZURE_OPENAI_API_VERSION = "2024-02-15-preview"
+  CHUNK_SIZE = "1000"
+  CHUNK_OVERLAP = "200"
+  MAX_DOCUMENT_SIZE_MB = "10"
+
+[[vm]]
+memory = "2gb"   # or "1gb", "4gb" as needed
+cpus = 1

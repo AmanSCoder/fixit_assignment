@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import documents, query, websocket
 from app.config import settings
@@ -6,6 +6,7 @@ from app.models.document_table import Base
 from app.db.session import engine
 import os
 import logging
+import time
 
 log_level = os.getenv("LOG_LEVEL", "info").upper()
 logging.basicConfig(level=log_level)
@@ -14,6 +15,20 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="Document-based Question Answering System with RAG",
 )
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        return response
+    except Exception as e:
+        logging.exception(f"Request failed: {e}")
+        # Re-raise to let FastAPI handle it
+        raise
+    finally:
+        process_time = time.time() - start_time
+        logging.info(f"Request processed in {process_time:.2f} seconds")
 
 # CORS middleware
 app.add_middleware(

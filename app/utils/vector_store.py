@@ -13,10 +13,21 @@ COLLECTION_NAME = "document_chunks"
 
 class VectorStore:
     def __init__(self):
-        logger.info("Initializing VectorStore...")
+        logger.info("Initializing vector store")
+        host = app_settings.VECTOR_DB_HOST
+
+        # Remove protocol if present
+        if host.startswith("http://"):
+            host = host[len("http://"):]
+            url = f"http://{host}:{app_settings.VECTOR_DB_PORT}"
+        elif host.startswith("https://"):
+            host = host[len("https://"):]
+            url = f"https://{host}:{app_settings.VECTOR_DB_PORT}"
+        else:
+            url = f"http://{host}:{app_settings.VECTOR_DB_PORT}"
+
         self.client = QdrantClient(
-            host=app_settings.VECTOR_DB_HOST,
-            port=app_settings.VECTOR_DB_PORT,
+            url=url
         )
         logger.debug(
             f"QdrantClient initialized with host={app_settings.VECTOR_DB_HOST}, port={app_settings.VECTOR_DB_PORT}"

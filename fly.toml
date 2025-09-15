@@ -1,0 +1,59 @@
+# fly.toml app configuration file generated for fixit-assignment on 2025-09-15T14:17:45+05:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'fixit-assignment'
+primary_region = 'bom'
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  # Add these lines for longer timeouts
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[http_service.timeouts]]
+    # Set longer timeouts for large file uploads
+    read_header = "10s"
+    read_body = "30s"
+    write = "30s"
+    idle = "120s"
+
+[env]
+  APP_NAME = "DocuQuery"
+  DATABASE_URL = "postgresql+psycopg2://postgres:postgres_password@postgres-fixit-app.flycast:5432/postgres"
+  MINIO_ENDPOINT = "http://minio-app-name.fly.dev:9000"
+  MINIO_ACCESS_KEY = "minioadmin"
+  MINIO_SECRET_KEY = "minioadmin"
+  MINIO_BUCKET_NAME = "documents"
+  REDIS_HOST = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io"
+  REDIS_PORT = "6379"
+  REDIS_DB = "0"
+  CELERY_BROKER_URL = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io:6379/0"
+  CELERY_RESULT_BACKEND = "redis://default:bf2bb23d9fce489690ba0f6e69d7ee61@fly-white-dust-8862.upstash.io:6379/0"
+  VECTOR_DB_TYPE = "qdrant"
+  VECTOR_DB_HOST = "qdrant-fixit.fly.dev"
+  VECTOR_DB_PORT = "6333"
+  AI_MODEL_PROVIDER = "azure"
+  AZURE_OPENAI_ENDPOINT = "https://amans-mfjlnzg6-eastus2.cognitiveservices.azure.com"
+  AZURE_EMBEDDING_DEPLOYMENT_NAME = "text-embedding-ada-002"
+  AZURE_CHAT_MODEL_DEPLOYMENT_NAME = "gpt-4o"
+  AZURE_OPENAI_API_VERSION = "2024-02-15-preview"
+  CHUNK_SIZE = "1000"
+  CHUNK_OVERLAP = "200"
+  MAX_DOCUMENT_SIZE_MB = "10"
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

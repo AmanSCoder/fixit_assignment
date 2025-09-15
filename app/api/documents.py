@@ -35,6 +35,11 @@ def get_db():
 async def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Upload a new document"""
     try:
+        # Log upload attempt
+        logger.info(
+            f"Starting upload for file: {file.filename}, size: {file.size if hasattr(file, 'size') else 'unknown'}"
+        )
+
         # Check file extension
         allowed_extensions = [".pdf", ".txt", ".docx", ".doc"]
         file_ext = "." + file.filename.split(".")[-1].lower()
@@ -63,8 +68,14 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         # Process document in background
         process_document_task.delay(doc_id, doc_info["object_name"])
 
+        logger.info(f"Upload complete for document ID: {doc_id}")
         return db_doc
+    except HTTPException as he:
+        # Re-raise HTTP exceptions
+        logger.warning(f"HTTP error during upload: {he.detail}")
+        raise
     except Exception as e:
+        # More detailed logging
         logger.exception(f"Error uploading document: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to upload document: {str(e)}")
 

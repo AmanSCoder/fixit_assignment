@@ -31,7 +31,23 @@ celery_app.conf.update(
 
 @celery_app.task(bind=True, name="process_document")
 def process_document_task(self, document_id: str, object_name: str):
-    db = SessionLocal()
+    # Create a new db session for each task to prevent connection issues
+    from sqlalchemy.orm import sessionmaker
+    from app.db.session import engine
+    from sqlalchemy import create_engine
+    from app.config import settings
+    import urllib.parse
+    
+    # Parse the original database URL to ensure we have all components
+    db_url = "postgresql+psycopg2://postgres:postgres_password@postgres-fixit-app.flycast:5432/postgres?sslmode=disable" # TODO remove this hard coding
+
+    # Create a custom engine with the modified connection string
+    task_engine = create_engine(db_url)
+    
+    # Use a custom session for this task
+    SessionMaker = sessionmaker(autocommit=False, autoflush=False, bind=task_engine)
+    db = SessionMaker()
+    
     try:
         logger.info(
             f"Processing document {document_id} with object_name: {object_name}"
@@ -92,7 +108,10 @@ def process_document_task(self, document_id: str, object_name: str):
         return result
     except Exception as e:
         logger.error(f"Error processing document {document_id}: {e}", exc_info=True)
-        update_document_status(db, document_id, DocumentStatusEnum.failed)
+        try:
+            update_document_status(db, document_id, DocumentStatusEnum.failed)
+        except Exception as db_err:
+            logger.error(f"Failed to update document status: {db_err}")
         return False
     finally:
         db.close()

@@ -1,0 +1,28 @@
+app = "minio-app-name"
+primary_region = "bom"
+
+[build]
+  image = "minio/minio:latest"
+
+[env]
+  MINIO_ROOT_USER = "minioadmin"
+  MINIO_ROOT_PASSWORD = "minioadmin"
+
+[processes]
+  minio = "server /data --console-address ':9001'"
+
+[[services]]
+  processes = ["minio"]
+  internal_port = 9000
+
+  [[services.ports]]
+    port = 9000
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 9001
+    handlers = ["http"]
+
+[mounts]
+  source = "minio_data"
+  destination = "/data"

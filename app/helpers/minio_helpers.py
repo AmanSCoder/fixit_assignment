@@ -16,16 +16,21 @@ class MinioHelper:
     def _init_client(self):
         if self.client is None:
             endpoint, secure = self.get_endpoint()
-            self.client = Minio(
-                endpoint,
-                access_key=settings.MINIO_ACCESS_KEY,
-                secret_key=settings.MINIO_SECRET_KEY,
-                secure=secure,  
-            )
-            self._ensure_bucket_exists()
+            try:
+                self.client = Minio(
+                    endpoint,
+                    access_key=settings.MINIO_ACCESS_KEY,
+                    secret_key=settings.MINIO_SECRET_KEY,
+                    secure=secure,  
+                )
+                logger.info(f"Successfully connected to MinIO at {endpoint}")
+                self._ensure_bucket_exists()
+            except Exception as e:
+                logger.error(f"Failed to connect to MinIO: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to connect to storage: {str(e)}")
 
     def get_endpoint(self):
-        endpoint =settings.MINIO_ENDPOINT
+        endpoint = settings.MINIO_ENDPOINT
         if endpoint.startswith("http://"):
             endpoint = endpoint[len("http://"):]
             secure = False
@@ -33,7 +38,12 @@ class MinioHelper:
             endpoint = endpoint[len("https://"):]
             secure = True
         else:
-            secure = True
+            # Change this default to False since your MinIO is HTTP only
+            secure = False
+        
+        # Debug logging - add this line to debug connection issues
+        logger.info(f"Connecting to MinIO at endpoint: {endpoint}, secure: {secure}")
+        
         return endpoint, secure
 
     def _ensure_bucket_exists(self):
