@@ -1,8 +1,8 @@
 from typing import List, Dict, Any, Tuple, Optional, AsyncGenerator
 import time
-from app.core.vector_store import vector_store
-from app.services.ai_service import ai_service
-from app.core.cache import cache
+from app.utils.vector_store import vector_store
+from app.helpers.ai_helpers import ai_helper
+from app.utils.cache import cache
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class RAGEngine:
 
         # Generate embedding for the question
         logger.debug(f"Generating embedding for question: '{question}'")
-        question_embedding = await ai_service.generate_embedding(question)
+        question_embedding = await ai_helper.generate_embedding(question)
         logger.debug(f"Generated embedding for question: {question_embedding}")
 
         # Search for relevant chunks
@@ -57,13 +57,13 @@ class RAGEngine:
             )
 
         # Construct context from retrieved chunks
-        context_chunks = search_results["documents"][0]
+        context_chunks = search_results["documents"]
         logger.debug(f"Context chunks: {context_chunks}")
         context = "\n\n".join(context_chunks)
 
         # Generate answer
         logger.debug(f"Generating answer for question: '{question}' with context.")
-        answer = await ai_service.generate_answer(question, context)
+        answer = await ai_helper.generate_answer(question, context)
         logger.info(f"Generated answer: {answer}")
 
         # Cache the result
@@ -97,7 +97,7 @@ class RAGEngine:
 
         # Generate embedding for the question
         logger.debug(f"Generating embedding for question: '{question}'")
-        question_embedding = await ai_service.generate_embedding(question)
+        question_embedding = await ai_helper.generate_embedding(question)
         logger.debug(f"Generated embedding for question: {question_embedding}")
 
         # Search for relevant chunks
@@ -124,7 +124,7 @@ class RAGEngine:
         # Generate and stream the answer
         logger.debug(f"Streaming answer for question: '{question}' with context.")
         full_answer = ""
-        async for token in ai_service.generate_answer_stream(question, context):
+        async for token in ai_helper.generate_answer_stream(question, context):
             full_answer += token
             logger.debug(f"Streaming token: {token}")
             yield token, None

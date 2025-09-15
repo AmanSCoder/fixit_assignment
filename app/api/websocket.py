@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime
 import logging
-from app.core.rag_engine import rag_engine
+from app.utils.rag_engine import rag_engine
 
 logger = logging.getLogger(__name__)
 

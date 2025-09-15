@@ -2,8 +2,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Query
 from typing import List
 from datetime import datetime
 from app.models.document import DocumentResponse, DocumentList
-from app.services.minio_service import minio_service
-from app.services.celery_tasks import process_document_task
+from app.helpers.minio_helpers import minio_helper
+from app.helpers.celery_tasks import process_document_task
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.db.crud_documents import (
@@ -13,8 +13,8 @@ from app.db.crud_documents import (
     delete_document,
 )
 from app.models.document_db import DocumentStatusEnum
-from app.core.vector_store import vector_store
-from app.core.cache import cache
+from app.utils.vector_store import vector_store
+from app.utils.cache import cache
 import uuid
 import logging
 
@@ -45,7 +45,7 @@ async def upload_document(file: UploadFile = File(...), db: Session = Depends(ge
         )
 
     # Upload file to MinIO
-    doc_info = await minio_service.upload_document(file)
+    doc_info = await minio_helper.upload_document(file)
 
     doc_id = doc_info["id"]
     document_data = {
@@ -92,7 +92,7 @@ async def delete_document_endpoint(document_id: str, db: Session = Depends(get_d
 
     # Delete from MinIO
     try:
-        minio_service.delete_document(document_id, doc.file_name)
+        minio_helper.delete_document(document_id, doc.file_name)
     except Exception as e:
         # Log but don't fail deletion if file is already gone
         logger.warning(f"Failed to delete file from MinIO: {e}")

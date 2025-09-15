@@ -1,9 +1,9 @@
 from celery import Celery
 from app.config import settings
-from app.core.document_processor import document_processor
-from app.services.ai_service import ai_service
-from app.core.vector_store import vector_store
-from app.core.cache import cache
+from app.utils.document_processor import document_processor
+from app.helpers.ai_helpers import ai_helper
+from app.utils.vector_store import vector_store
+from app.utils.cache import cache
 from app.db.session import SessionLocal
 from app.db.crud_documents import update_document_status
 from app.models.document_db import DocumentStatusEnum
@@ -56,7 +56,7 @@ def process_document_task(self, document_id: str, object_name: str):
             f"Generating embeddings for document {document_id} chunks: {chunks}"
         )
         loop = asyncio.get_event_loop()
-        embeddings = loop.run_until_complete(ai_service.generate_embeddings(chunks))
+        embeddings = loop.run_until_complete(ai_helper.generate_embeddings(chunks))
         logger.debug(f"Generated embeddings for document {document_id}")
 
         # Store chunks and embeddings in vector store

@@ -7,7 +7,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
-class AIService:
+class AIHelper:
     def __init__(self):
         self.api_key = settings.AZURE_OPENAI_API_KEY
         self.api_version = settings.AZURE_OPENAI_API_VERSION
@@ -150,5 +150,4 @@ class AIService:
             raise ValueError(f"Failed to generate streaming answer: {str(e)}")
 
 
-# Create a singleton instance
-ai_service = AIService()
+ai_helper = AIHelper()

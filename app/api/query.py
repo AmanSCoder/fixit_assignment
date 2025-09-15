@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 from typing import List, Dict, Any
 from app.models.query import QueryRequest, QueryResponse, QueryHistory, QueryHistoryItem
-from app.core.rag_engine import rag_engine
+from app.utils.rag_engine import rag_engine
 import logging
 
 logger = logging.getLogger(__name__)

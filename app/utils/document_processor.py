@@ -5,8 +5,8 @@ import logging
 from PyPDF2 import PdfReader
 import docx
 from app.config import settings
-from app.services.minio_service import minio_service
-from app.services.ai_service import ai_service
+from app.helpers.minio_helpers import minio_helper
+from app.helpers.ai_helpers import ai_helper
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ class DocumentProcessor:
         file_type = self._get_content_type(file_name)
 
         # Get document content from MinIO
-        file_content = minio_service.get_document(document_id, file_name)
+        file_content = minio_helper.get_document(document_id, file_name)
 
         # Extract text from document
         text = self.extract_text(file_content, file_type)

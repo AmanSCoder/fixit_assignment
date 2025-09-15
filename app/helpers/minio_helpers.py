@@ -9,15 +9,28 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MinioService:
+class MinioHelper:
     def __init__(self):
+        endpoint, secure = self.get_endpoint()
         self.client = Minio(
-            settings.MINIO_ENDPOINT,
+            endpoint,
             access_key=settings.MINIO_ACCESS_KEY,
             secret_key=settings.MINIO_SECRET_KEY,
-            secure=False,  # Set to True for HTTPS
+            secure=secure,  
         )
         self._ensure_bucket_exists()
+
+    def get_endpoint(self):
+        endpoint =settings.MINIO_ENDPOINT
+        if endpoint.startswith("http://"):
+            endpoint = endpoint[len("http://"):]
+            secure = False
+        elif endpoint.startswith("https://"):
+            endpoint = endpoint[len("https://"):]
+            secure = True
+        else:
+            secure = True
+        return endpoint, secure
 
     def _ensure_bucket_exists(self):
         """Ensure the documents bucket exists"""
@@ -89,4 +102,4 @@ class MinioService:
 
 
 # Create a singleton instance
-minio_service = MinioService()
+minio_helper = MinioHelper()
