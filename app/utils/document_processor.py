@@ -131,16 +131,13 @@ class DocumentProcessor:
     def _get_content_type(self, file_name: str) -> str:
         """Determine content type from file extension"""
         ext = file_name.split(".")[-1].lower()
-        if ext == "pdf":
-            return "application/pdf"
-        elif ext == "docx":
-            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        elif ext == "doc":
-            return "application/msword"
-        elif ext == "txt":
-            return "text/plain"
-        else:
-            return "application/octet-stream"
+        content_type_map = {
+            "pdf": "application/pdf",
+            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "doc": "application/msword",
+            "txt": "text/plain",
+        }
+        return content_type_map.get(ext, "application/octet-stream")
 
 
 # Create a singleton instance

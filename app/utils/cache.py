@@ -100,8 +100,6 @@ class RedisCache:
             # Delete document chunks
             self.delete("document_chunks", document_id)
 
-            # Delete all query results related to this document
-            # This is a simplified approach - in production, you might want to use Redis SCAN
             pattern = self._generate_key("query_result", f"{document_id}:*")
             keys = self.redis.keys(pattern)
             if keys:

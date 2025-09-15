@@ -49,7 +49,6 @@ class MinioHelper:
     def _ensure_bucket_exists(self):
         """Ensure the documents bucket exists"""
         try:
-            self._init_client()
             if not self.client.bucket_exists(settings.MINIO_BUCKET_NAME):
                 self.client.make_bucket(settings.MINIO_BUCKET_NAME)
                 logger.info(f"Created bucket {settings.MINIO_BUCKET_NAME}")

@@ -115,6 +115,3 @@ def process_document_task(self, document_id: str, object_name: str):
         return False
     finally:
         db.close()
-
-
-# Create a separate Celery worker file that imports these tasks

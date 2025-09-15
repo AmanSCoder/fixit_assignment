@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-class ConnectionManager:
+class ConnectionHandler:
     def __init__(self):
         self.active_connections: dict = {}
 
@@ -38,13 +38,13 @@ class ConnectionManager:
             await websocket.send_text(message)
 
 
-manager = ConnectionManager()
+handler = ConnectionHandler()
 
 
 @router.websocket("/ws/query")
 async def websocket_query(websocket: WebSocket):
     """WebSocket endpoint for real-time queries"""
-    connection_id = await manager.connect(websocket)
+    connection_id = await handler.connect(websocket)
     try:
         while True:
             # Receive query from client
@@ -56,7 +56,7 @@ async def websocket_query(websocket: WebSocket):
                 question = query_data.get("question")
 
                 if not document_id or not question:
-                    await manager.send_message(
+                    await handler.send_message(
                         connection_id,
                         json.dumps(
                             {
@@ -67,7 +67,7 @@ async def websocket_query(websocket: WebSocket):
                     continue
 
                 # Send acknowledgement
-                await manager.send_message(
+                await handler.send_message(
                     connection_id,
                     json.dumps(
                         {
@@ -82,12 +82,12 @@ async def websocket_query(websocket: WebSocket):
                 async for token, _ in rag_engine.process_query_stream(
                     document_id, question
                 ):
-                    await manager.send_message(
+                    await handler.send_message(
                         connection_id, json.dumps({"type": "token", "content": token})
                     )
 
                 # Send completion message
-                await manager.send_message(
+                await handler.send_message(
                     connection_id,
                     json.dumps(
                         {"type": "complete", "timestamp": datetime.now().isoformat()}
@@ -95,16 +95,16 @@ async def websocket_query(websocket: WebSocket):
                 )
 
             except json.JSONDecodeError:
-                await manager.send_message(
+                await handler.send_message(
                     connection_id, json.dumps({"error": "Invalid JSON format."})
                 )
             except Exception as e:
                 logger.error(f"Error processing WebSocket query: {e}", exc_info=True)
-                await manager.send_message(
+                await handler.send_message(
                     connection_id,
                     json.dumps({"error": f"Error processing query: {str(e)}"}),
                 )
 
     except WebSocketDisconnect:
-        manager.disconnect(connection_id)
+        handler.disconnect(connection_id)
         logger.info(f"Client disconnected: {connection_id}")
