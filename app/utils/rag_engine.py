@@ -50,11 +50,8 @@ class RAGEngine:
             logger.warning(
                 f"No relevant information found for document_id={document_id}, question='{question}'"
             )
-            return (
-                "I couldn't find any relevant information to answer your question.",
-                time.time() - start_time,
-                [],
-            )
+            logger.warning("Falling back to entire document.....")
+            search_results = vector_store.search_chunks_via_document_id(document_id)
 
         # Construct context from retrieved chunks
         context_chunks = search_results["documents"]
@@ -113,8 +110,8 @@ class RAGEngine:
             logger.warning(
                 f"No relevant information found for document_id={document_id}, question='{question}'"
             )
-            yield "I couldn't find any relevant information to answer your question.", []
-            return
+            logger.warning("Falling back to entire document.....")
+            search_results = vector_store.search_chunks_via_document_id(document_id)
 
         # Construct context from retrieved chunks
         context_chunks = search_results["documents"]

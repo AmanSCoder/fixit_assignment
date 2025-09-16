@@ -44,7 +44,7 @@ class VectorStore:
                 vectors_config={
                     "size": 1536,
                     "distance": "Cosine",
-                },  # Adjust size to your embedding dimension
+                },
             )
             logger.info(f"Collection '{COLLECTION_NAME}' created.")
         else:
@@ -121,6 +121,37 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Error searching vector store: {e}")
             return {"documents": [], "metadatas": [], "distances": []}
+        
+    def search_chunks_via_document_id(self, document_id):
+        try:
+            query_filter = Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id", match=MatchValue(value=document_id)
+                    )
+                ]
+            )
+            logger.debug(f"Using filter: {query_filter}")
+            results = self.client.search(
+                collection_name=COLLECTION_NAME,
+                query_filter=query_filter,
+                limit=1000
+            )
+            response = {
+                "documents": [r.payload.get("text") for r in results],
+                "metadatas": [r.payload for r in results],
+                "distances": [r.score for r in results],
+            }
+            logger.debug(f"Search response: {response}")
+            logger.info(
+                f"Search completed for document_id={document_id}. Found {len(results)} results."
+            )
+            return response
+        except Exception as e:
+            logger.error(f"Error searching vector store: {e}")
+            return {"documents": [], "metadatas": [], "distances": []}
+
+
 
     def delete_document_chunks(self, document_id: str) -> bool:
         try:
